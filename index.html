@@ -90,6 +90,14 @@
   }
   .field input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(52,107,147,0.12);}
   .field-note{font-size:12.5px;color:var(--muted);}
+  .field textarea{
+    width:100%;background:var(--white);border:1.5px solid var(--border);color:var(--text);
+    padding:12px 14px;font-family:'Inter',sans-serif;font-size:15px;border-radius:8px;
+    transition:border-color .2s var(--ease);resize:vertical;min-height:90px;
+  }
+  .field textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(52,107,147,0.12);}
+  .char-counter{font-size:11.5px;color:var(--muted);text-align:right;margin-top:4px;}
+  .char-counter.limit{color:var(--red);}
 
   /* Paso 1: operación */
   .op-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -473,6 +481,26 @@
           <button type="button" class="link-btn quitar" id="alqRemoveSegundo">✕ Quitar segundo firmante</button>
         </div>
 
+        <div class="form-card accent-navy" style="margin-top:14px;">
+          <div class="card-heading"><div class="icon">🏠</div><h3>Convivencia</h3></div>
+          <div class="field">
+            <label>¿Cuántas personas van a vivir en el piso?</label>
+            <div class="choice-group" id="alqNumPersonasGroup">
+              <button type="button" class="choice-btn" data-val="1">1</button>
+              <button type="button" class="choice-btn" data-val="2">2</button>
+              <button type="button" class="choice-btn" data-val="3">3</button>
+              <button type="button" class="choice-btn" data-val="4">4</button>
+              <button type="button" class="choice-btn" data-val="5+">5+</button>
+            </div>
+            <p class="choice-error" id="alqErrorNumPersonas">Indica cuántas personas van a vivir en el piso.</p>
+          </div>
+          <div class="field">
+            <label>Cuéntanos sobre vuestra situación laboral</label>
+            <textarea id="alqSituacionLaboralTexto" maxlength="500" placeholder="Ej. Trabajo a jornada completa desde hace 3 años, contrato indefinido..."></textarea>
+            <div class="char-counter" id="alqSituacionLaboralContador">0 / 500</div>
+          </div>
+        </div>
+
         <div class="form-card accent-gold" style="margin-top:14px;">
           <div class="card-heading"><div class="icon">📱</div><h3>Contacto</h3></div>
           <div class="field">
@@ -625,6 +653,7 @@
     situacion1: '',
     situacion2: '',
     segundoActivo: false,
+    numPersonas: '',
     hipoteca: '',
     entradaDisponible: '',
     habitaciones: '',
@@ -693,6 +722,17 @@
     renderDocsAlquiler();
   });
   setupSingleChoice(document.getElementById('alqSituacion2Group'), val=>{ state.situacion2 = val; renderDocsAlquiler(); });
+  setupSingleChoice(document.getElementById('alqNumPersonasGroup'), val=>{
+    state.numPersonas = val;
+    document.getElementById('alqErrorNumPersonas').classList.remove('show');
+  });
+  const alqSituacionLaboralTexto = document.getElementById('alqSituacionLaboralTexto');
+  const alqSituacionLaboralContador = document.getElementById('alqSituacionLaboralContador');
+  alqSituacionLaboralTexto.addEventListener('input', ()=>{
+    const len = alqSituacionLaboralTexto.value.length;
+    alqSituacionLaboralContador.textContent = len + ' / 500';
+    alqSituacionLaboralContador.classList.toggle('limit', len >= 500);
+  });
   document.getElementById('alqAddSegundo').addEventListener('click', ()=>{
     document.getElementById('alqBlockFirmante2').style.display = 'block';
     document.getElementById('alqAddSegundo').style.display = 'none';
@@ -769,6 +809,7 @@
         const nombre2 = document.getElementById('alqNombre2').value.trim();
         if(!nombre2 || !state.situacion2) ok = false;
       }
+      if(!state.numPersonas){ document.getElementById('alqErrorNumPersonas').classList.add('show'); ok = false; }
       const tel = document.getElementById('alqTelefono').value.trim();
       const email = document.getElementById('alqEmail').value.trim();
       if(!tel || !email){ document.getElementById('alqErrorContacto').classList.add('show'); ok = false; }
@@ -969,6 +1010,8 @@
         zonasInteres: zonasTexto,
         situacionLaboralFirmante1: state.situacion1,
         situacionLaboralFirmante2: state.segundoActivo ? state.situacion2 : 'No hay segundo firmante',
+        numeroPersonasConvivencia: state.numPersonas,
+        descripcionSituacionLaboral: document.getElementById('alqSituacionLaboralTexto').value.trim(),
         ingresosMensuales: ingresos,
         porcentajeAlquiler: Math.round((presupuesto / ingresos) * 100),
         presupuestoAlquiler: presupuesto,
